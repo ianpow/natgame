@@ -2,8 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  basePath: '/natgame',
-  assetPrefix: '/natgame'
+  output: 'export'
 };
 
 module.exports = nextConfig;
