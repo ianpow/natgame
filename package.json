@@ -1,12 +1,13 @@
 {
-  "name": "math-challenge",
+  "name": "nat5aom-game",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "postinstall": "npx tailwindcss init -p"
   },
   "dependencies": {
     "@hello-pangea/dnd": "^18.0.1",
@@ -26,9 +27,12 @@
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "autoprefixer": "^10.4.17",
     "eslint": "^8.56.0",
     "eslint-config-next": "14.1.0",
     "postcss": "^8",
+    "style-loader": "^3.3.4",
+    "css-loader": "^6.10.0",
     "tailwindcss": "^3.4.1",
     "typescript": "^5"
   }
