@@ -50,5 +50,10 @@ module.exports = {
       }
     }
   },
+  safelist: [
+    'border-border',
+    'bg-background',
+    'text-foreground'
+  ],
   plugins: [require("tailwindcss-animate")]
 }
