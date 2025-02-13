@@ -200,14 +200,7 @@ interface DragToOrderItem {
   correctPosition: number;
 }
 
-interface DragResult {
-  destination?: {
-    index: number;
-  };
-  source: {
-    index: number;
-  };
-}
+import type { DropResult } from '@hello-pangea/dnd';
 
 interface DragToOrderProps {
   items: DragToOrderItem[];
@@ -217,16 +210,7 @@ interface DragToOrderProps {
 const DragToOrder: React.FC<DragToOrderProps> = ({ items, onOrderComplete }) => {
   const [orderedItems, setOrderedItems] = useState<DragToOrderItem[]>(items);
   
-  interface DragResult {
-    destination?: {
-      index: number;
-    };
-    source: {
-      index: number;
-    };
-  }
-
-  const handleDragEnd = (result: DragResult) => {
+  const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
     
     const reorderedItems = Array.from(orderedItems);
