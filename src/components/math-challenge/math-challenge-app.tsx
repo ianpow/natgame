@@ -1569,9 +1569,9 @@ function isChallengeType<T extends Challenge>(
       )}
       <Card className="bg-white">
         <CardHeader>
-          <CardTitle className="flex justify-between items-center">
+          <CardTitle className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
             <span>Day {currentDay} of 30</span>
-            <div className="flex items-center space-x-4">
+            <div className="flex flex-wrap items-center gap-4">
               <div className="flex items-center">
                 <Star className="text-yellow-500 mr-1" />
                 <span>Score: {score}</span>
@@ -1588,7 +1588,7 @@ function isChallengeType<T extends Challenge>(
                     resetProgress();
                   }
                 }}
-                className="ml-4 text-red-500 hover:text-red-600 hover:bg-red-50"
+                className="text-red-500 hover:text-red-600 hover:bg-red-50"
               >
                 Reset Progress
               </Button>
@@ -1633,21 +1633,20 @@ function isChallengeType<T extends Challenge>(
             </div>
           )}
 
-          <div className="mt-6 space-y-4">
+          <div className="mt-6 flex justify-between gap-4">
             <Button
-              className="w-full"
+              className="w-[48%]"
               onClick={() => setShowAnswer(!showAnswer)}
             >
               {showAnswer ? "Hide Solution" : "Show Solution"}
             </Button>
-            {isCorrect !== null && (
-              <Button
-                className={`w-full ${isCorrect ? 'bg-green-500 hover:bg-green-600' : 'bg-blue-500 hover:bg-blue-600'}`}
-                onClick={moveToNextDay}
-              >
-                {isCorrect ? 'Next Challenge (Correct +10pts)' : 'Try Next Challenge'}
-              </Button>
-            )}
+            <Button
+              className={`w-[48%] ${isCorrect ? 'bg-green-500 hover:bg-green-600' : 'bg-blue-500 hover:bg-blue-600'}`}
+              onClick={moveToNextDay}
+              disabled={isCorrect === null}
+            >
+              {isCorrect ? 'Next Challenge (+10pts)' : 'Try Next Challenge'}
+            </Button>
           </div>
         </CardContent>
       </Card>
