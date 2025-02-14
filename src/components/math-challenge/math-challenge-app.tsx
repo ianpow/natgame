@@ -498,7 +498,7 @@ const topics: Topic[] = [
     badgeIcon: <Calculator className="text-blue-500" />,
     challenge: {
       type: "numeric",
-      question: "Monthly salary £1,560. NI rates: 0% up to £1,048, 10% £1,048-£4,189. Calculate NI payment.",
+      question: "Monthly salary £1,560. NI rates: 0% up to £1,048, 10% £1,048-£4,189. Calculate NI payment to 2 decimal places.",
       correctAnswer: 51.20,
       tolerance: 0.01,
       solution: {
@@ -521,7 +521,7 @@ const topics: Topic[] = [
     badgeIcon: <Clock className="text-indigo-500" />,
     challenge: {
       type: "numeric",
-      question: "Flight: Edinburgh 0625 → London 0740 (1h15m flight) → Giza 1855 (Giza +1hr from London). Total flight time?",
+      question: "Flight: Edinburgh 0625 → London 0740, London 1155 → Giza 1855 (Giza +1hr from London). Total flight time in minutes?",
       correctAnswer: 435,
       tolerance: 1,
       solution: {
@@ -545,7 +545,7 @@ const topics: Topic[] = [
     badgeIcon: <Brain className="text-purple-500" />,
     challenge: {
       type: "numeric",
-      question: "A circular pond has radius 2.5m. A path runs around its edge. If the path is 1m wide, what is the area of the path in square meters?",
+      question: "A circular pond has radius 2.5m. A path runs around its edge. If the path is 1m wide, what is the area of the path in square meters? Answer to 2 decimal places",
       correctAnswer: 20.42,
       tolerance: 0.1,
       solution: {
@@ -569,7 +569,7 @@ const topics: Topic[] = [
     badgeIcon: <Box className="text-green-500" />,
     challenge: {
       type: "numeric",
-      question: "A cylindrical container with radius 8cm and height 15cm is filled with water. If you pour this water into a rectangular tank of length 20cm and width 12cm, what will be the height of the water in cm?",
+      question: "A cylindrical container with radius 8cm and height 15cm is filled with water. If you pour this water into a rectangular tank of length 20cm and width 12cm, what will be the height of the water in cm? Answer to 2 decimal places",
       correctAnswer: 25.13,
       tolerance: 0.1,
       solution: {
@@ -593,7 +593,7 @@ const topics: Topic[] = [
     badgeIcon: <Brain className="text-blue-500" />,
     challenge: {
       type: "numeric",
-      question: "Calculate the standard deviation of: 10, 5, 7, 2, 3, 6",
+      question: "Calculate the standard deviation of: 10, 5, 7, 2, 3, 6 Answer to 2 decimal places",
       correctAnswer: 2.88,
       tolerance: 0.01,
       solution: {
@@ -619,12 +619,12 @@ const topics: Topic[] = [
       type: "multipleChoice",
       question: "A drone flies 400m on bearing 055°, then 500m on bearing 190°. What's the bearing to return to the start?",
       options: [
-        "235°",
+        "305°",
         "055°",
         "135°",
-        "315°"
+        "235°"
       ],
-      correctAnswer: 0,
+      correctAnswer: 3,
       solution: {
         steps: [
           "1. Plot the outward journey",
@@ -646,7 +646,7 @@ const topics: Topic[] = [
     badgeIcon: <Wallet className="text-green-500" />,
     challenge: {
       type: "numeric",
-      question: "Using £1 = 59.97 EGP, how many Egyptian Pounds would you get for £1000?",
+      question: "Using £1 = 59.97 EGP, how many Egyptian Pounds would you get for £1000? Answer as a whole number",
       correctAnswer: 59970,
       tolerance: 10,
       solution: {
@@ -742,8 +742,8 @@ const topics: Topic[] = [
       items: [
         { id: "1", content: "r = 0.92", correctPosition: 0 },
         { id: "2", content: "r = -0.87", correctPosition: 1 },
-        { id: "3", content: "r = 0.45", correctPosition: 2 },
-        { id: "4", content: "r = 0.12", correctPosition: 3 }
+        { id: "3", content: "r = 0.12", correctPosition: 3 },
+        { id: "4", content: "r = 0.45", correctPosition: 2 }
       ],
       solution: {
         steps: [
@@ -768,12 +768,12 @@ const topics: Topic[] = [
       type: "multipleChoice",
       question: "A box plot shows: Min=31, Q1=43, Median=50, Q3=57, Max=92. What is the interquartile range?",
       options: [
-        "14",
-        "49",
         "61",
+        "49",
+        "14",
         "7"
       ],
-      correctAnswer: 0,
+      correctAnswer: 2,
       solution: {
         steps: [
           "1. Identify Q1 (43) and Q3 (57)",
@@ -795,7 +795,7 @@ const topics: Topic[] = [
     badgeIcon: <Brain className="text-blue-500" />,
     challenge: {
       type: "numeric",
-      question: "From a standard deck, what is the probability (as a decimal to 3dp) of drawing two hearts in a row without replacement?",
+      question: "From a standard deck, what is the probability (as a decimal to 3dp) of drawing two hearts in a row without replacement? Answer to 4 decimal places",
       correctAnswer: 0.0625,
       tolerance: 0.001,
       solution: {
@@ -1106,7 +1106,7 @@ const topics: Topic[] = [
     badgeIcon: <Wallet className="text-blue-500" />,
     challenge: {
       type: "numeric",
-      question: "Convert £500 through: £→€ (1.15), €→$ (1.08), $→£ (0.79). How much remains?",
+      question: "Convert £500 through: £→€ (1.15), €→$ (1.08), $→£ (0.79). How much remains? Enter the number only",
       correctAnswer: 492.39,
       tolerance: 0.01,
       solution: {
@@ -1205,7 +1205,7 @@ const topics: Topic[] = [
     badgeIcon: <Calculator className="text-purple-500" />,
     challenge: {
       type: "numeric",
-      question: "Salary £42,000. NI 12% above £1,048/month, Tax 20%, Pension 5%. Monthly take-home?",
+      question: "Salary £42,000. NI 12% above £1,048/month, Tax 20%, Pension 5%. Monthly take-home? (write the number only)",
       correctAnswer: 2651.83,
       tolerance: 0.01,
       solution: {
@@ -1331,40 +1331,30 @@ function isChallengeType<T extends Challenge>(
 
   const MathChallengeApp: React.FC = () => {
     const [componentKey, setComponentKey] = useState<number>(0);
-  // Load saved progress from localStorage
-  const loadProgress = () => {
+  const [currentDay, setCurrentDay] = useState<number>(1);
+  const [score, setScore] = useState<number>(0);
+  const [currentStreak, setCurrentStreak] = useState<number>(0);
+  const [showAnswer, setShowAnswer] = useState<boolean>(false);
+  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  const [currentTopic, setCurrentTopic] = useState<Topic>(topics[0]);
+  const [unlockedAchievements, setUnlockedAchievements] = useState<string[]>([]);
+  const [showAchievement, setShowAchievement] = useState<Achievement | null>(null);
+  const [showCompletion, setShowCompletion] = useState(false);
+  const [highestStreak, setHighestStreak] = useState(0);
+
+  // Load saved progress from localStorage on client side only
+  useEffect(() => {
     const savedProgress = localStorage.getItem('mathChallengeProgress');
     if (savedProgress) {
       const progress = JSON.parse(savedProgress);
-      return {
-        currentDay: progress.currentDay || 1,
-        score: progress.score || 0,
-        currentStreak: progress.currentStreak || 0,
-        highestStreak: progress.highestStreak || 0,
-        unlockedAchievements: progress.unlockedAchievements || []
-      };
+      setCurrentDay(progress.currentDay || 1);
+      setScore(progress.score || 0);
+      setCurrentStreak(progress.currentStreak || 0);
+      setHighestStreak(progress.highestStreak || 0);
+      setUnlockedAchievements(progress.unlockedAchievements || []);
+      setCurrentTopic(topics[progress.currentDay - 1] || topics[0]);
     }
-    return {
-      currentDay: 1,
-      score: 0,
-      currentStreak: 0,
-      highestStreak: 0,
-      unlockedAchievements: []
-    };
-  };
-
-  // Initialize state with saved progress
-  const progress = loadProgress();
-  const [currentDay, setCurrentDay] = useState<number>(progress.currentDay);
-  const [score, setScore] = useState<number>(progress.score);
-  const [currentStreak, setCurrentStreak] = useState<number>(progress.currentStreak);
-  const [showAnswer, setShowAnswer] = useState<boolean>(false);
-  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
-  const [currentTopic, setCurrentTopic] = useState<Topic>(topics[progress.currentDay - 1]);
-  const [unlockedAchievements, setUnlockedAchievements] = useState<string[]>(progress.unlockedAchievements);
-  const [showAchievement, setShowAchievement] = useState<Achievement | null>(null);
-  const [showCompletion, setShowCompletion] = useState(false);
-  const [highestStreak, setHighestStreak] = useState(progress.highestStreak);
+  }, []);
 
   // Save progress whenever it changes
   useEffect(() => {
