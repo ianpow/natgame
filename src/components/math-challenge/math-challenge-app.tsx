@@ -1,10 +1,10 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Trophy, Star, Brain, Medal, ArrowRight, Package,
          Compass, PieChart, Box, Calculator, Ruler, Clock,
-         Gauge, LineChart, Wallet } from 'lucide-react';
+         Gauge, LineChart, Wallet, Award, Crown, Target } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 // Interface definitions
@@ -84,67 +84,95 @@ interface MatchingChallengeProps {
 }
 
 const MatchingChallenge: React.FC<MatchingChallengeProps> = ({ items, onSubmit }) => {
-  const [selectedLeft, setSelectedLeft] = useState<number | null>(null);
-  const [matches, setMatches] = useState<Array<{ left: number; right: number }>>([]);
+  const [selectedQuestion, setSelectedQuestion] = useState<number | null>(null);
+  const [matches, setMatches] = useState<Array<{ questionIndex: number; answerIndex: number }>>([]);
   const [isComplete, setIsComplete] = useState(false);
+  const [shuffledAnswers, setShuffledAnswers] = useState<Array<{ text: string; correctIndex: number }>>([]);
+  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
 
-  const handleLeftClick = (index: number) => {
-    setSelectedLeft(selectedLeft === index ? null : index);
+  useEffect(() => {
+    // Create array of answers with their correct indices
+    const answers = items.map((item, index) => ({
+      text: item.right,
+      correctIndex: item.correctIndex
+    }));
+    
+    // Shuffle answers
+    const shuffled = [...answers];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    setShuffledAnswers(shuffled);
+  }, [items]);
+
+  const handleQuestionClick = (index: number) => {
+    if (!isComplete) {
+      setSelectedQuestion(selectedQuestion === index ? null : index);
+    }
   };
 
-  const handleRightClick = (index: number) => {
-    if (selectedLeft !== null) {
-      const newMatches = [...matches, { left: selectedLeft, right: index }];
+  const handleAnswerClick = (answerIndex: number) => {
+    if (selectedQuestion !== null && !isComplete) {
+      const newMatches = [...matches, {
+        questionIndex: selectedQuestion,
+        answerIndex
+      }];
       setMatches(newMatches);
-      setSelectedLeft(null);
+      setSelectedQuestion(null);
 
       if (newMatches.length === items.length) {
+        // Check if each match is correct by comparing correctIndex
+        const isCorrect = newMatches.every(match => {
+          const question = items[match.questionIndex];
+          const answer = shuffledAnswers[match.answerIndex];
+          return question.correctIndex === answer.correctIndex;
+        });
         setIsComplete(true);
-        const isCorrect = newMatches.every(match => 
-          items[match.left].correctIndex === match.right
-        );
+        setIsCorrect(isCorrect);
         onSubmit(isCorrect);
       }
     }
   };
 
-  const isMatched = (side: 'left' | 'right', index: number): boolean => {
+  const isMatched = (type: 'question' | 'answer', index: number): boolean => {
     return matches.some(match =>
-      (side === 'left' && match.left === index) ||
-      (side === 'right' && match.right === index)
+      (type === 'question' && match.questionIndex === index) ||
+      (type === 'answer' && match.answerIndex === index)
     );
   };
 
-  const getMatchColor = (index: number, side: 'left' | 'right'): string => {
-    const match = side === 'left' 
-      ? matches.find(m => m.left === index)
-      : matches.find(m => m.right === index);
+  const getMatchColor = (type: 'question' | 'answer', index: number): string => {
+    const match = type === 'question'
+      ? matches.find(m => m.questionIndex === index)
+      : matches.find(m => m.answerIndex === index);
     
     if (match) {
-      const isCorrectMatch = items[match.left].correctIndex === match.right;
+      const question = items[match.questionIndex];
+      const answer = shuffledAnswers[match.answerIndex];
+      const isCorrectMatch = question.correctIndex === answer.correctIndex;
       return isCorrectMatch ? 'bg-green-100 border-green-500' : 'bg-red-100 border-red-500';
     }
     return '';
   };
-
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-8">
         <div className="space-y-3">
-          <div className="font-medium text-gray-700 mb-2">Items:</div>
+          <div className="font-medium text-gray-700 mb-2">Questions:</div>
           {items.map((item, index) => (
             <Button
-              key={`left-${index}`}
+              key={`question-${index}`}
               variant="outline"
               className={`w-full justify-start p-4 text-gray-900 border-2 ${
-                selectedLeft === index 
+                selectedQuestion === index
                   ? 'bg-blue-100 border-blue-500'
-                  : isMatched('left', index)
-                  ? getMatchColor(index, 'left')
+                  : isMatched('question', index)
+                  ? getMatchColor('question', index)
                   : 'bg-white hover:bg-gray-50 border-gray-200'
               }`}
-              onClick={() => handleLeftClick(index)}
-              disabled={isMatched('left', index)}
+              onClick={() => handleQuestionClick(index)}
+              disabled={isMatched('question', index)}
             >
               {item.left}
             </Button>
@@ -152,40 +180,38 @@ const MatchingChallenge: React.FC<MatchingChallengeProps> = ({ items, onSubmit }
         </div>
 
         <div className="space-y-3">
-          <div className="font-medium text-gray-700 mb-2">Matches:</div>
-          {items.map((item, index) => (
+          <div className="font-medium text-gray-700 mb-2">Answers:</div>
+          {shuffledAnswers.map((answer, index) => (
             <Button
-              key={`right-${index}`}
+              key={`answer-${index}`}
               variant="outline"
               className={`w-full justify-start p-4 text-gray-900 border-2 ${
-                isMatched('right', index)
-                  ? getMatchColor(index, 'right')
-                  : selectedLeft !== null
+                isMatched('answer', index)
+                  ? getMatchColor('answer', index)
+                  : selectedQuestion !== null
                   ? 'bg-white hover:bg-blue-50 border-blue-200'
                   : 'bg-white hover:bg-gray-50 border-gray-200'
               }`}
-              onClick={() => handleRightClick(index)}
-              disabled={isMatched('right', index) || selectedLeft === null}
+              onClick={() => handleAnswerClick(index)}
+              disabled={isMatched('answer', index) || selectedQuestion === null}
             >
-              {item.right}
+              {answer.text}
             </Button>
           ))}
         </div>
       </div>
 
-      {selectedLeft !== null && (
+      {selectedQuestion !== null && (
         <div className="text-center text-blue-600 bg-blue-50 p-2 rounded-lg">
-          Now click the matching item on the right
+          Now click the matching answer
         </div>
       )}
 
       {isComplete && (
         <div className={`p-4 rounded-lg ${
-          matches.every(match => items[match.left].correctIndex === match.right)
-            ? 'bg-green-50 text-green-700'
-            : 'bg-red-50 text-red-700'
+          isCorrect ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
         }`}>
-          {matches.every(match => items[match.left].correctIndex === match.right)
+          {isCorrect
             ? 'Perfect match! All items correctly matched!'
             : 'Some matches are incorrect. Check the colored borders and try again!'}
         </div>
@@ -223,29 +249,37 @@ const DragToOrder: React.FC<DragToOrderProps> = ({ items, onOrderComplete }) => 
   };
 
   return (
-    <DragDropContext onDragEnd={handleDragEnd}>
-      <Droppable droppableId="items">
-        {(provided) => (
-          <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-2">
-            {orderedItems.map((item, index) => (
-              <Draggable key={item.id} draggableId={item.id} index={index}>
-                {(provided) => (
-                  <div
-                    ref={provided.innerRef}
-                    {...provided.draggableProps}
-                    {...provided.dragHandleProps}
-                    className="p-4 bg-white border rounded-lg shadow-sm"
-                  >
-                    {item.content}
-                  </div>
-                )}
-              </Draggable>
-            ))}
-            {provided.placeholder}
-          </div>
-        )}
-      </Droppable>
-    </DragDropContext>
+    <div className="space-y-4">
+      <DragDropContext onDragEnd={handleDragEnd}>
+        <Droppable droppableId="items">
+          {(provided) => (
+            <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-2">
+              {orderedItems.map((item, index) => (
+                <Draggable key={item.id} draggableId={item.id} index={index}>
+                  {(provided) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      {...provided.dragHandleProps}
+                      className="p-4 bg-white border rounded-lg shadow-sm"
+                    >
+                      {item.content}
+                    </div>
+                  )}
+                </Draggable>
+              ))}
+              {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
+      </DragDropContext>
+      <Button
+        onClick={() => onOrderComplete(orderedItems.every((item, index) => item.correctPosition === index))}
+        className="w-full"
+      >
+        Submit
+      </Button>
+    </div>
   );
 };
 
@@ -276,7 +310,7 @@ const NumericInput: React.FC<NumericInputProps> = ({ onSubmit, correctAnswer, to
           className="flex-1 p-2 border rounded"
           step="any"
         />
-        <Button onClick={handleSubmit}>Check</Button>
+        <Button onClick={handleSubmit}>Submit</Button>
       </div>
       {showFeedback && (
         <div className={`p-2 rounded ${Math.abs(parseFloat(value) - correctAnswer) <= tolerance 
@@ -299,17 +333,64 @@ interface SliderProps {
   step: number;
 }
 
-const Slider: React.FC<SliderProps> = ({ value, onChange, min, max, step }) => {
+
+interface SliderChallengeComponentProps {
+  sliderProps: {
+    min: number;
+    max: number;
+    step: number;
+    correctAnswer: number;
+    tolerance: number;
+  };
+  onSubmit: (isCorrect: boolean) => void;
+}
+
+const SliderChallengeComponent: React.FC<SliderChallengeComponentProps> = ({ sliderProps, onSubmit }) => {
+  const [sliderValue, setSliderValue] = useState<number>(0);
+
+  const handleSubmit = () => {
+    const isCorrect = Math.abs(sliderValue - sliderProps.correctAnswer) <= sliderProps.tolerance;
+    onSubmit(isCorrect);
+  };
+
   return (
-    <input
-      type="range"
-      min={min}
-      max={max}
-      step={step}
-      value={value}
-      onChange={(e) => onChange(parseFloat(e.target.value))}
-      className="w-full"
-    />
+    <div className="space-y-4">
+      <Slider
+        value={sliderValue}
+        onChange={setSliderValue}
+        min={sliderProps.min}
+        max={sliderProps.max}
+        step={sliderProps.step}
+      />
+      <Button onClick={handleSubmit} className="w-full">
+        Submit
+      </Button>
+    </div>
+  );
+};
+
+const Slider: React.FC<SliderProps> = ({ value, onChange, min, max, step }) => {
+  const [currentValue, setCurrentValue] = useState<number>(value);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = parseFloat(e.target.value);
+    setCurrentValue(newValue);
+    onChange(newValue);
+  };
+
+  return (
+    <div className="space-y-2">
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={currentValue}
+        onChange={handleChange}
+        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+      />
+      <div className="text-center text-sm text-gray-600">Value: {currentValue}</div>
+    </div>
   );
 };
 
@@ -1194,6 +1275,42 @@ type ChallengeType = 'matching' | 'multipleChoice' | 'numeric' | 'dragToOrder' |
 
 type Challenge = MatchingChallenge | MultipleChoiceChallenge | NumericChallenge | DragToOrderChallenge | SliderChallenge;
 
+interface Achievement {
+  id: string;
+  name: string;
+  description: string;
+  icon: React.ReactNode;
+  requiredStreak: number;
+  color: string;
+}
+
+const achievements: Achievement[] = [
+  {
+    id: 'beginner',
+    name: 'Math Rookie',
+    description: 'Get a streak of 3',
+    icon: <Award className="text-blue-500" />,
+    requiredStreak: 3,
+    color: 'blue'
+  },
+  {
+    id: 'intermediate',
+    name: 'Math Pro',
+    description: 'Get a streak of 5',
+    icon: <Target className="text-green-500" />,
+    requiredStreak: 5,
+    color: 'green'
+  },
+  {
+    id: 'expert',
+    name: 'Math Master',
+    description: 'Get a streak of 10',
+    icon: <Crown className="text-yellow-500" />,
+    requiredStreak: 10,
+    color: 'yellow'
+  }
+];
+
 interface Topic {
   id: number;
   name: string;
@@ -1212,46 +1329,141 @@ function isChallengeType<T extends Challenge>(
   return challenge.type === type;
 }
 
-const MathChallengeApp: React.FC = () => {
-  const [currentDay, setCurrentDay] = useState<number>(1);
-  const [score, setScore] = useState<number>(0);
-  const [currentStreak, setCurrentStreak] = useState<number>(0);
-  const [showAnswer, setShowAnswer] = useState<boolean>(false);
-  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
-
-  const handleAnswerSubmit = (correct: boolean): void => {
-    setIsCorrect(correct);
-    if (correct) {
-      setScore((prevScore) => prevScore + 10);
-      setCurrentStreak((prevStreak) => prevStreak + 1);
-    } else {
-      setCurrentStreak(0);
+  const MathChallengeApp: React.FC = () => {
+    const [componentKey, setComponentKey] = useState<number>(0);
+  // Load saved progress from localStorage
+  const loadProgress = () => {
+    const savedProgress = localStorage.getItem('mathChallengeProgress');
+    if (savedProgress) {
+      const progress = JSON.parse(savedProgress);
+      return {
+        currentDay: progress.currentDay || 1,
+        score: progress.score || 0,
+        currentStreak: progress.currentStreak || 0,
+        highestStreak: progress.highestStreak || 0,
+        unlockedAchievements: progress.unlockedAchievements || []
+      };
     }
+    return {
+      currentDay: 1,
+      score: 0,
+      currentStreak: 0,
+      highestStreak: 0,
+      unlockedAchievements: []
+    };
   };
 
-  const getCurrentTopic = (): Topic => {
+  // Initialize state with saved progress
+  const progress = loadProgress();
+  const [currentDay, setCurrentDay] = useState<number>(progress.currentDay);
+  const [score, setScore] = useState<number>(progress.score);
+  const [currentStreak, setCurrentStreak] = useState<number>(progress.currentStreak);
+  const [showAnswer, setShowAnswer] = useState<boolean>(false);
+  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  const [currentTopic, setCurrentTopic] = useState<Topic>(topics[progress.currentDay - 1]);
+  const [unlockedAchievements, setUnlockedAchievements] = useState<string[]>(progress.unlockedAchievements);
+  const [showAchievement, setShowAchievement] = useState<Achievement | null>(null);
+  const [showCompletion, setShowCompletion] = useState(false);
+  const [highestStreak, setHighestStreak] = useState(progress.highestStreak);
+
+  // Save progress whenever it changes
+  useEffect(() => {
+    const progress = {
+      currentDay,
+      score,
+      currentStreak,
+      highestStreak,
+      unlockedAchievements
+    };
+    localStorage.setItem('mathChallengeProgress', JSON.stringify(progress));
+  }, [currentDay, score, currentStreak, highestStreak, unlockedAchievements]);
+
+  // Reset progress function
+  const resetProgress = () => {
+    localStorage.removeItem('mathChallengeProgress');
+    setCurrentDay(1);
+    setScore(0);
+    setCurrentStreak(0);
+    setHighestStreak(0);
+    setUnlockedAchievements([]);
+    setCurrentTopic(topics[0]);
+    setShowAnswer(false);
+    setIsCorrect(null);
+    setShowCompletion(false);
+  };
+
+  useEffect(() => {
     const topic = topics[currentDay - 1];
-    if (!topic && topics.length > 0) {
-      return topics[0];
+    if (topic) {
+      setCurrentTopic(topic);
     }
-    // This should never happen as we have predefined topics
-    return topics[0];
+  }, [currentDay]);
+
+  useEffect(() => {
+    // Check for new achievements based on streak
+    const newAchievements = achievements.filter(achievement =>
+      currentStreak >= achievement.requiredStreak &&
+      !unlockedAchievements.includes(achievement.id)
+    );
+
+    if (newAchievements.length > 0) {
+      // Show the highest level achievement unlocked
+      const highestAchievement = newAchievements[newAchievements.length - 1];
+      setShowAchievement(highestAchievement);
+      setUnlockedAchievements(prev => [...prev, ...newAchievements.map(a => a.id)]);
+
+      // Hide achievement notification after 3 seconds
+      setTimeout(() => {
+        setShowAchievement(null);
+      }, 3000);
+    }
+  }, [currentStreak, unlockedAchievements]);
+
+  const handleAnswerSubmit = (correct: boolean): void => {
+    if (isCorrect === null) {  // Only update if not already set
+      setIsCorrect(correct);
+      if (correct) {
+        setScore((prevScore) => prevScore + 10);
+        setCurrentStreak((prevStreak) => {
+          const newStreak = prevStreak + 1;
+          setHighestStreak((current: number) => Math.max(current, newStreak));
+          return newStreak;
+        });
+      } else {
+        setCurrentStreak(0);
+      }
+    }
   };
 
   const moveToNextDay = (): void => {
     if (currentDay < topics.length) {
+      const isLastDay = currentDay === topics.length - 1;
+      
       setCurrentDay((prevDay) => prevDay + 1);
       setShowAnswer(false);
       setIsCorrect(null);
+      setComponentKey(key => key + 1);
+      
+      // Reset the state for the next challenge
+      const nextTopic = topics[currentDay];
+      if (nextTopic) {
+        setCurrentTopic(nextTopic);
+      }
+
+      // Show completion modal after the last question
+      if (isLastDay) {
+        setShowCompletion(true);
+      }
     }
   };
 
   const renderChallenge = (): React.ReactElement => {
-    const challenge = getCurrentTopic().challenge;
+    const challenge = currentTopic.challenge;
     
     if (isChallengeType<MatchingChallenge>(challenge, 'matching')) {
       return (
         <MatchingChallenge
+          key={componentKey}
           items={challenge.items}
           onSubmit={handleAnswerSubmit}
         />
@@ -1261,6 +1473,7 @@ const MathChallengeApp: React.FC = () => {
     if (isChallengeType<MultipleChoiceChallenge>(challenge, 'multipleChoice')) {
       return (
         <MultipleChoice
+          key={componentKey}
           options={challenge.options}
           correctAnswer={challenge.correctAnswer}
           onSelect={(index) => handleAnswerSubmit(index === challenge.correctAnswer)}
@@ -1272,6 +1485,7 @@ const MathChallengeApp: React.FC = () => {
     if (isChallengeType<NumericChallenge>(challenge, 'numeric')) {
       return (
         <NumericInput
+          key={componentKey}
           correctAnswer={challenge.correctAnswer}
           tolerance={challenge.tolerance}
           onSubmit={handleAnswerSubmit}
@@ -1282,6 +1496,7 @@ const MathChallengeApp: React.FC = () => {
     if (isChallengeType<DragToOrderChallenge>(challenge, 'dragToOrder')) {
       return (
         <DragToOrder
+          key={componentKey}
           items={challenge.items}
           onOrderComplete={handleAnswerSubmit}
         />
@@ -1290,15 +1505,10 @@ const MathChallengeApp: React.FC = () => {
     
     if (isChallengeType<SliderChallenge>(challenge, 'slider')) {
       return (
-        <Slider
-          value={0}
-          onChange={(value) => {
-            handleAnswerSubmit(
-              Math.abs(value - challenge.sliderProps.correctAnswer) <=
-              challenge.sliderProps.tolerance
-            )}
-          }
-          {...challenge.sliderProps}
+        <SliderChallengeComponent
+          key={componentKey}
+          sliderProps={challenge.sliderProps}
+          onSubmit={handleAnswerSubmit}
         />
       );
     }
@@ -1307,7 +1517,66 @@ const MathChallengeApp: React.FC = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-4 space-y-6">
+    <div className="max-w-4xl mx-auto p-4 space-y-6 relative">
+      {showCompletion && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg p-8 max-w-lg w-full space-y-6">
+            <h2 className="text-3xl font-bold text-center mb-6">Congratulations! 🎉</h2>
+            
+            <div className="space-y-4">
+              <div className="text-center">
+                <p className="text-xl font-semibold">Final Score: {score}/300</p>
+                <p className="text-lg">Highest Streak: {highestStreak}</p>
+              </div>
+
+              <div className="border-t border-b border-gray-200 py-4">
+                <h3 className="text-lg font-semibold mb-3">Achievements Unlocked:</h3>
+                <div className="space-y-2">
+                  {unlockedAchievements.map(id => {
+                    const achievement = achievements.find(a => a.id === id);
+                    if (!achievement) return null;
+                    return (
+                      <div key={id} className="flex items-center space-x-3">
+                        {achievement.icon}
+                        <div>
+                          <p className="font-medium">{achievement.name}</p>
+                          <p className="text-sm text-gray-600">{achievement.description}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="text-center space-y-3">
+                <p className="text-lg">Well done on completing all 30 challenges!</p>
+                <p className="text-gray-600">Good luck in your Nat 5 Applications Of Mathematics final exam.</p>
+              </div>
+            </div>
+
+            <Button
+              className="w-full mt-6"
+              onClick={() => setShowCompletion(false)}
+            >
+              Close
+            </Button>
+          </div>
+        </div>
+      )}
+      {showAchievement && (
+        <div
+          className="fixed top-4 right-4 bg-white border-2 p-4 rounded-lg shadow-lg flex items-center space-x-3 animate-bounce"
+          style={{ borderColor: `rgb(var(--${showAchievement.color}-500))` }}
+        >
+          <div className="p-2 rounded-full" style={{ backgroundColor: `rgb(var(--${showAchievement.color}-100))` }}>
+            {showAchievement.icon}
+          </div>
+          <div>
+            <h4 className="font-bold text-lg">{showAchievement.name}</h4>
+            <p className="text-gray-600">{showAchievement.description}</p>
+          </div>
+        </div>
+      )}
       <Card className="bg-white">
         <CardHeader>
           <CardTitle className="flex justify-between items-center">
@@ -1321,6 +1590,18 @@ const MathChallengeApp: React.FC = () => {
                 <Trophy className="text-blue-500 mr-1" />
                 <span>Streak: {currentStreak}</span>
               </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (window.confirm('Are you sure you want to reset all progress? This cannot be undone.')) {
+                    resetProgress();
+                  }
+                }}
+                className="ml-4 text-red-500 hover:text-red-600 hover:bg-red-50"
+              >
+                Reset Progress
+              </Button>
             </div>
           </CardTitle>
         </CardHeader>
@@ -1332,16 +1613,16 @@ const MathChallengeApp: React.FC = () => {
       <Card className="bg-white">
         <CardContent className="p-6">
           <div className="flex items-center space-x-4 mb-4">
-            {getCurrentTopic().badgeIcon}
+            {currentTopic.badgeIcon}
             <div>
-              <h3 className="text-xl font-bold">{getCurrentTopic().name}</h3>
-              <p className="text-gray-600">{getCurrentTopic().description}</p>
+              <h3 className="text-xl font-bold">{currentTopic.name}</h3>
+              <p className="text-gray-600">{currentTopic.description}</p>
             </div>
           </div>
 
           <div className="bg-blue-50 p-4 rounded-lg mb-4">
             <h4 className="font-semibold mb-2">Today&apos;s Challenge:</h4>
-            <p className="mb-4">{getCurrentTopic().challenge.question}</p>
+            <p className="mb-4">{currentTopic.challenge.question}</p>
             {renderChallenge()}
           </div>
 
@@ -1349,7 +1630,7 @@ const MathChallengeApp: React.FC = () => {
             <div className="bg-gray-50 p-4 rounded-lg mb-4">
               <h4 className="font-semibold mb-2">Solution:</h4>
               <div className="space-y-2">
-                {getCurrentTopic().challenge.solution.steps.map((step, index) => (
+                {currentTopic.challenge.solution.steps.map((step: string, index: number) => (
                   <p key={index} className="flex items-center">
                     <ArrowRight className="w-4 h-4 mr-2 text-blue-500" />
                     {step}
@@ -1357,21 +1638,21 @@ const MathChallengeApp: React.FC = () => {
                 ))}
               </div>
               <p className="mt-4 text-gray-700">
-                <strong>Explanation:</strong> {getCurrentTopic().challenge.solution.explanation}
+                <strong>Explanation:</strong> {currentTopic.challenge.solution.explanation}
               </p>
             </div>
           )}
 
-          <div className="mt-6 flex space-x-4">
-            <Button 
-              className="flex-1"
+          <div className="mt-6 space-y-4">
+            <Button
+              className="w-full"
               onClick={() => setShowAnswer(!showAnswer)}
             >
               {showAnswer ? "Hide Solution" : "Show Solution"}
             </Button>
             {isCorrect !== null && (
-              <Button 
-                className={`flex-1 ${isCorrect ? 'bg-green-500 hover:bg-green-600' : 'bg-blue-500 hover:bg-blue-600'}`}
+              <Button
+                className={`w-full ${isCorrect ? 'bg-green-500 hover:bg-green-600' : 'bg-blue-500 hover:bg-blue-600'}`}
                 onClick={moveToNextDay}
               >
                 {isCorrect ? 'Next Challenge (Correct +10pts)' : 'Try Next Challenge'}
